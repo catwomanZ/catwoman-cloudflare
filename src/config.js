@@ -1,0 +1,7 @@
+import{b64utf8,hostname}from'./utils.js';
+const uriHost=h=>h.includes(':')&&!h.startsWith('[')?`[${h}]`:h;
+export function profile(r,s={}){const u=new URL(r.url),rh=hostname(u.hostname)||u.hostname,ph=hostname(s.public_host)||rh,ea=hostname(s.entry_address)||ph,secure=u.protocol==='https:'||!['localhost','127.0.0.1','::1'].includes(rh);return{publicHost:ph,entryAddress:ea,port:secure?443:Number(u.port||80),secure}}
+export function vlessLink(r,u,s={}){const p=profile(r,s),path=`/connect/${u.sub_token}`,q=new URLSearchParams({encryption:'none',security:p.secure?'tls':'none',type:'ws',host:p.publicHost,path});if(p.secure){q.set('sni',p.publicHost);q.set('fp','chrome');q.set('alpn','http/1.1')}const title=`${String(s.config_title||'CatWoman').trim()||'CatWoman'}-${u.username}`;return`vless://${u.uuid}@${uriHost(p.entryAddress)}:${p.port}?${q}#${encodeURIComponent(title)}`}
+export const subUrl=(r,u,raw=false)=>`${new URL(r.url).origin}/sub/${u.sub_token}${raw?'/raw':''}`;
+export const rawSub=(r,u,s)=>b64utf8(`${vlessLink(r,u,s)}\n`);
+export function subHeaders(u,s={}){const total=Math.max(0,Number(u.data_limit_bytes)||0),used=Math.max(0,Number(u.used_bytes)||0),expire=Number(u.expiry_at)>0?Math.floor(Number(u.expiry_at)/1000):0;return{'content-type':'text/plain; charset=utf-8','cache-control':'no-store','subscription-userinfo':`upload=0; download=${used}; total=${total}; expire=${expire}`,'profile-title':`base64:${b64utf8(String(s.config_title||'CatWoman'))}`}}
